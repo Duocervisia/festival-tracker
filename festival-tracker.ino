@@ -15,11 +15,12 @@ void setup() {
     }
 
     if (!commHandler.begin()) {
-        Serial.println("Display initialization failed");
+        Serial.println("Communication handler initialization failed");
         while (true);
     }
 }
 
 void loop() {
     commHandler.sendData();
+    commHandler.checkReceive();
 }

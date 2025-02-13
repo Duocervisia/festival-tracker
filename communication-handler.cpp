@@ -12,7 +12,7 @@ CommunicationHandler::CommunicationHandler(Display &disp) {
 
 bool CommunicationHandler::begin() {
     WiFi.mode(WIFI_STA);
-    esp_wifi_set_max_tx_power(82);
+    esp_wifi_set_protocol((wifi_interface_t)ESP_IF_WIFI_STA, WIFI_PROTOCOL_LR);
     esp_read_mac(ownMac, ESP_MAC_WIFI_STA);
 
     if (esp_now_init() != ESP_OK) {
@@ -20,7 +20,7 @@ bool CommunicationHandler::begin() {
         return false;
     }
 
-    esp_now_register_send_cb(OnDataSent);
+    // esp_now_register_send_cb(OnDataSent);
     esp_now_register_recv_cb(OnDataRecv);
 
     for (int i = 0; i < sizeof(peers) / sizeof(peers[0]); i++) {
@@ -71,21 +71,16 @@ void CommunicationHandler::sendData() {
     }
 }
 
-void CommunicationHandler::OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
-    Serial.print("Last Packet Send Status: ");
-    Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
-}
+// void CommunicationHandler::OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
+//     Serial.print("Last Packet Send Status: ");
+//     Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
+// }
 
-void CommunicationHandler::OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
-    memcpy(&data, incomingData, sizeof(data));
-    packetCount++;
-    totalPackets++;
-
+void CommunicationHandler::checkReceive() {
     unsigned long currentTime = millis();
     if (currentTime - lastReceiveTime >= 1000) {
-        float packetLoss = 100.0 * (10 - packetCount) / 10.0; // 10 packets expected per second (100ms interval)
+        float packetLoss = 100.0 * (10 - packetCount) / 10.0;
 
-        // Display received data
         char buffer[64];
         snprintf(buffer, sizeof(buffer), "ID: %d\nLoss: %.1f%%\nTotal: %d", data.device_id, packetLoss, totalPackets);
         display->showText(buffer);
@@ -93,4 +88,10 @@ void CommunicationHandler::OnDataRecv(const uint8_t * mac, const uint8_t *incomi
         packetCount = 0;
         lastReceiveTime = currentTime;
     }
+}
+
+void CommunicationHandler::OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
+    memcpy(&data, incomingData, sizeof(data));
+    packetCount++;
+    totalPackets++;
 }
