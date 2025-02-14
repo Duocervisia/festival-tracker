@@ -28,8 +28,9 @@ private:
     static Display* display;
 
     static unsigned long lastReceiveTime;
-    static int packetCount;
+    static int lastTotalPackets;
     static int totalPackets;
+    static int timeSinceLastPacket;
 
     uint8_t ownMac[6];
     uint8_t peers[3][6] = {

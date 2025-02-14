@@ -3,8 +3,9 @@
 struct_message CommunicationHandler::data;
 Display* CommunicationHandler::display = nullptr;
 unsigned long CommunicationHandler::lastReceiveTime = 0;
-int CommunicationHandler::packetCount = 0;
+int CommunicationHandler::lastTotalPackets = 0;
 int CommunicationHandler::totalPackets = 0;
+int CommunicationHandler::timeSinceLastPacket = 0;
 
 CommunicationHandler::CommunicationHandler(Display &disp) {
     display = &disp;
@@ -47,12 +48,11 @@ void CommunicationHandler::sendData() {
     unsigned long currentTime = millis();
 
     if (memcmp(peers[2], ownMac, 6) == 0) {
-        delay(1000);
         return;
     }
 
     if (currentTime - lastSendTime >= 100) {
-        lastSendTime = currentTime;
+        Serial.println("Sending data");
 
         data.latitude = 52.5200;
         data.longitude = 13.4050;
@@ -68,6 +68,8 @@ void CommunicationHandler::sendData() {
                 esp_now_send(peers[i], (uint8_t *) &data, sizeof(data));
             }
         }
+        lastSendTime = currentTime;
+
     }
 }
 
@@ -77,21 +79,22 @@ void CommunicationHandler::sendData() {
 // }
 
 void CommunicationHandler::checkReceive() {
+    if (memcmp(peers[2], ownMac, 6) != 0) {
+        return;
+    }
     unsigned long currentTime = millis();
     if (currentTime - lastReceiveTime >= 1000) {
-        float packetLoss = 100.0 * (10 - packetCount) / 10.0;
-
-        char buffer[64];
-        snprintf(buffer, sizeof(buffer), "ID: %d\nLoss: %.1f%%\nTotal: %d", data.device_id, packetLoss, totalPackets);
-        display->showText(buffer);
-
-        packetCount = 0;
         lastReceiveTime = currentTime;
+        float packetLoss = 100.0 * (10 - (totalPackets - lastTotalPackets)) / 10.0;
+        lastTotalPackets = totalPackets;
+        char buffer[64];
+        snprintf(buffer, sizeof(buffer), "ID: %d\nLoss: %.1f%%\nTotal: %d\nLast: %dms ago", data.device_id, packetLoss, totalPackets, millis() - timeSinceLastPacket);
+        display->showText(buffer);
     }
 }
 
 void CommunicationHandler::OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
     memcpy(&data, incomingData, sizeof(data));
-    packetCount++;
     totalPackets++;
+    timeSinceLastPacket = millis();
 }

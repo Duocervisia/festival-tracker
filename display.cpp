@@ -18,7 +18,7 @@ void Display::showText(const char* text) {
     u8g2.setFont(u8g2_font_ncenB08_tr); // Choose a suitable font
 
     // Split the text into lines and draw each line separately
-    int y = 24; // Starting y position
+    int y = 12; // Starting y position
     const char* line = text;
     while (*line) {
         const char* nextLine = strchr(line, '\n');
