@@ -1,100 +1,76 @@
 #include "communication-handler.h"
 
-struct_message CommunicationHandler::data;
-Display* CommunicationHandler::display = nullptr;
-unsigned long CommunicationHandler::lastReceiveTime = 0;
-int CommunicationHandler::lastTotalPackets = 0;
-int CommunicationHandler::totalPackets = 0;
-int CommunicationHandler::timeSinceLastPacket = 0;
-
 CommunicationHandler::CommunicationHandler(Display &disp) {
     display = &disp;
+    deviceID = ESP.getEfuseMac() & 0xFFFFFFFF; // Extract lower 32 bits of MAC
 }
 
 bool CommunicationHandler::begin() {
-    WiFi.mode(WIFI_STA);
-    esp_wifi_set_protocol((wifi_interface_t)ESP_IF_WIFI_STA, WIFI_PROTOCOL_LR);
-    esp_read_mac(ownMac, ESP_MAC_WIFI_STA);
-
-    if (esp_now_init() != ESP_OK) {
-        Serial.println("ESP-NOW Initialization Failed");
+    Serial.begin(115200);
+    
+    int state = lora.begin(434.0, 125.0, 9, 7, 0x12, 10, 8, 0, false);
+    if (state != RADIOLIB_ERR_NONE) {
+        Serial.print("LoRa Initialization Failed, code ");
+        Serial.println(state);
         return false;
     }
-
-    // esp_now_register_send_cb(OnDataSent);
-    esp_now_register_recv_cb(OnDataRecv);
-
-    for (int i = 0; i < sizeof(peers) / sizeof(peers[0]); i++) {
-        if (memcmp(peers[i], ownMac, 6) != 0) {
-            addPeer(peers[i]);
-        }
-    }
+    
+    lora.setSyncWord(0xAA); // Set sync word for network separation
+    Serial.println("LoRa Initializing OK!");
     return true;
-}
-
-void CommunicationHandler::addPeer(uint8_t *peerAddress) {
-    esp_now_peer_info_t peerInfo = {};
-    memcpy(peerInfo.peer_addr, peerAddress, 6);
-    peerInfo.channel = 0;
-    peerInfo.encrypt = false;
-
-    if (esp_now_add_peer(&peerInfo) != ESP_OK) {
-        Serial.println("Failed to add peer");
-    }
 }
 
 void CommunicationHandler::sendData() {
     static unsigned long lastSendTime = 0;
     unsigned long currentTime = millis();
 
-    if (memcmp(peers[2], ownMac, 6) == 0) {
-        return;
-    }
-
-    if (currentTime - lastSendTime >= 100) {
+    if (currentTime - lastSendTime >= delayTime) {
         Serial.println("Sending data");
 
         data.latitude = 52.5200;
         data.longitude = 13.4050;
+        data.deviceID = deviceID; // Store unique device ID in struct
 
-        for (int i = 0; i < sizeof(peers) / sizeof(peers[0]); i++) {
-            if (memcmp(peers[i], ownMac, 6) == 0) {
-                data.device_id = i;
-            }
+        int state =  lora.transmit((uint8_t*)&data, sizeof(data));
+        // Check for transmission errors
+        if (state == RADIOLIB_ERR_NONE) {
+            Serial.println("Transmission successful!");
+        } else {
+            Serial.print("Transmission failed, code ");
+            Serial.println(state);
         }
 
-        for (int i = 0; i < sizeof(peers) / sizeof(peers[0]); i++) {
-            if (memcmp(peers[i], ownMac, 6) != 0) {
-                esp_now_send(peers[i], (uint8_t *) &data, sizeof(data));
-            }
-        }
         lastSendTime = currentTime;
-
     }
 }
 
-// void CommunicationHandler::OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
-//     Serial.print("Last Packet Send Status: ");
-//     Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
-// }
-
 void CommunicationHandler::checkReceive() {
-    if (memcmp(peers[2], ownMac, 6) != 0) {
-        return;
-    }
     unsigned long currentTime = millis();
+
+    while (int packetSize = lora.receive((uint8_t*)&data, sizeof(data))) {
+        if (packetSize == sizeof(data)) {
+            OnDataRecv(packetSize);
+        } else {
+            Serial.println("Received packet of unexpected size");
+        }
+    }
+    
     if (currentTime - lastReceiveTime >= 1000) {
         lastReceiveTime = currentTime;
         float packetLoss = 100.0 * (10 - (totalPackets - lastTotalPackets)) / 10.0;
         lastTotalPackets = totalPackets;
         char buffer[64];
-        snprintf(buffer, sizeof(buffer), "ID: %d\nLoss: %.1f%%\nTotal: %d\nLast: %dms ago", data.device_id, packetLoss, totalPackets, millis() - timeSinceLastPacket);
+        snprintf(buffer, sizeof(buffer), "ID: %08X\nLoss: %.1f%%\nTotal: %d\nLast: %dms ago", 
+                 data.deviceID, packetLoss, totalPackets, millis() - timeSinceLastPacket);
         display->showText(buffer);
     }
 }
 
-void CommunicationHandler::OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
-    memcpy(&data, incomingData, sizeof(data));
-    totalPackets++;
-    timeSinceLastPacket = millis();
+void CommunicationHandler::OnDataRecv(int packetSize) {
+    if (packetSize == sizeof(data)) {
+        totalPackets++;
+        timeSinceLastPacket = millis();
+    } else {
+        Serial.println("Received packet of unexpected size");
+    }
 }

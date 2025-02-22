@@ -1,15 +1,19 @@
 #ifndef COMMUNICATION_HANDLER_H
 #define COMMUNICATION_HANDLER_H
 
-#include <esp_now.h>
-#include <WiFi.h>
-#include <esp_wifi.h>
+#include <RadioLib.h>
 #include "display.h"
+#include <queue>
+
+#define NSS 5
+#define RESET 14
+#define DIO1 2
+#define BUSY 12
 
 struct struct_message {
     float latitude;
     float longitude;
-    int device_id;
+    uint32_t deviceID; // Unique ID based on ESP efuse MAC
 };
 
 class CommunicationHandler {
@@ -18,26 +22,20 @@ public:
     bool begin();
     void sendData();
     void checkReceive();
+    void OnDataRecv(int packetSize);
 
 private:
-    static void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status);
-    static void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len);
-    void addPeer(uint8_t *peerAddress);
-    
-    static struct_message data;
-    static Display* display;
-
-    static unsigned long lastReceiveTime;
-    static int lastTotalPackets;
-    static int totalPackets;
-    static int timeSinceLastPacket;
-
-    uint8_t ownMac[6];
-    uint8_t peers[3][6] = {
-        {0xCC, 0xDB, 0xA7, 0x2F, 0xEF, 0xB4},
-        {0xE4, 0x65, 0xB8, 0x77, 0x9B, 0xF4},
-        {0xD4, 0x8A, 0xFC, 0x96, 0x28, 0x68},
-    };
+    struct_message data;
+    struct_message receivedData[10];
+    Display* display = nullptr;
+    unsigned long lastReceiveTime = 0;
+    unsigned int lastTotalPackets = 0;
+    unsigned int totalPackets = 0;
+    unsigned int timeSinceLastPacket = 0;
+    unsigned int delayTime = 1000;
+    uint32_t deviceID; // Store unique device ID
+    SX1262 lora = new Module(NSS, RESET, DIO1, BUSY);
+    std::queue<struct_message> packetQueue; // Buffer for received packets
 };
 
-#endif
+#endif // COMMUNICATION_HANDLER_H
