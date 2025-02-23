@@ -7,8 +7,8 @@
 
 #define NSS 5
 #define RESET 14
-#define DIO1 2
-#define BUSY 12
+#define DIO1 35
+#define BUSY 27
 
 struct struct_message {
     float latitude;
@@ -22,8 +22,8 @@ public:
     bool begin();
     void sendData();
     void checkReceive();
-    void OnDataRecv(int packetSize);
-
+    void check();
+    static void setFlag(void);
 private:
     struct_message data;
     struct_message receivedData[10];
@@ -33,6 +33,9 @@ private:
     unsigned int totalPackets = 0;
     unsigned int timeSinceLastPacket = 0;
     unsigned int delayTime = 1000;
+    static volatile bool operationDone;
+    bool transmitFlag = false;
+    int transmissionState = RADIOLIB_ERR_NONE; // Ensure transmissionState is declared
     uint32_t deviceID; // Store unique device ID
     SX1262 lora = new Module(NSS, RESET, DIO1, BUSY);
     std::queue<struct_message> packetQueue; // Buffer for received packets

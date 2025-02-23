@@ -1,4 +1,3 @@
-#include <WiFi.h>
 #include "display.h"
 #include "communication-handler.h"
 #include "gps-handler.h"
@@ -27,8 +26,6 @@ void setup() {
 }
 
 void loop() {
-    commHandler.sendData();
-    commHandler.checkReceive();
+    commHandler.check();
     gpsHandler.read();
-    delay(1000);
 }
