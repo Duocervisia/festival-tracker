@@ -6,8 +6,8 @@
 #include <queue>
 
 #define NSS 5
-#define RESET 14
-#define DIO1 13
+#define RESET 13
+#define DIO1 14
 #define BUSY 27
 
 struct struct_message {

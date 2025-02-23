@@ -32,7 +32,7 @@ void CommunicationHandler::sendData() {
     static unsigned long lastSendTime = 0;
     unsigned long currentTime = millis();
 
-    if (currentTime - lastSendTime >= delayTime) {
+    if (!transmitFlag && currentTime - lastSendTime >= delayTime) {
         Serial.println("Sending data...");
         transmitFlag = true;
 
@@ -72,21 +72,27 @@ void CommunicationHandler::check(){
             // listen for response
             lora.startReceive();
             transmitFlag = false;
-
-        } else {
-            checkReceive();
         }
-    }else{
-        // sendData();
     }
+    checkReceive();
+    sendData();
 }
 
 void CommunicationHandler::checkReceive() {
     unsigned long currentTime = millis();
     String str;
+
+    if (transmitFlag || currentTime - lastReceiveTime < 200) {
+        return;
+    }
+
     int state = lora.readData(str);
 
+    
+
     if (state == RADIOLIB_ERR_NONE) {
+        lastReceiveTime = currentTime;
+
         Serial.println(F("[SX1262] Received packet!"));
 
         // Print RSSI and SNR values
@@ -97,6 +103,9 @@ void CommunicationHandler::checkReceive() {
         Serial.print(F("[SX1262] SNR: "));
         Serial.print(lora.getSNR());
         Serial.println(F(" dB"));
+
+        Serial.print(F("[SX1262] Data: "));
+        Serial.println(str);
 
         // Deserialize JSON for structured data
         StaticJsonDocument<128> json;
