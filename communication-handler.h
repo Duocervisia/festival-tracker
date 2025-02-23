@@ -7,7 +7,7 @@
 
 #define NSS 5
 #define RESET 14
-#define DIO1 35
+#define DIO1 13
 #define BUSY 27
 
 struct struct_message {
