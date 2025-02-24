@@ -1,10 +1,16 @@
 #include "gps-handler.h"
 #include <TinyGPS++.h>
 
+HardwareSerial neogps(1);
+
 bool GpsHandler::begin() {
     Serial.begin(115200);
     Serial.println("GPS Begin");
-    Serial2.begin(9600, SERIAL_8N1, gpsRxPin, gpsTxPin);
+    neogps.begin(9600, SERIAL_8N1, gpsRxPin, gpsTxPin);
+    delay(1000);
+    neogps.println("$PMTK314,-1*04");
+    neogps.println("$PMTK220,1000*1F");
+
     Serial.println("GPS Done!");
     return true;
 }
@@ -14,10 +20,24 @@ void GpsHandler::read() {
     if (currentTime - lastPositionUpdate >= delayTime) {
         lastPositionUpdate = currentTime;
         Serial.println("Reading GPS");
-        Serial.println(Serial2.available());
+        Serial.println(neogps.available());
+        boolean newData = false;
 
-        while (Serial2.available() > 0) {
-            gps.encode(Serial2.read());
+        while (neogps.available()){
+            char c = neogps.read();
+            Serial.print(c);
+            if (gps.encode(c))
+            {
+                newData = true;
+            }
+        }
+        Serial.println();
+
+        //If newData is true
+        if(newData == true)
+        {
+            newData = false;
+            Serial.println(gps.satellites.value());
         }
 
         if (gps.location.isUpdated()) {

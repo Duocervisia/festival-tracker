@@ -6,21 +6,21 @@
 
 volatile bool CommunicationHandler::operationDone = false; // Define operationDone
 
-CommunicationHandler::CommunicationHandler(Display &disp) {
+CommunicationHandler::CommunicationHandler(Display &disp, MessageHandler &msgHandler) {
     display = &disp;
-    deviceID = ESP.getEfuseMac() & 0xFFFFFFFF; // Extract lower 32 bits of MAC
+    messageHandler = &msgHandler;
 }
 
 bool CommunicationHandler::begin() {
     Serial.begin(115200);
 
-    int state = lora.begin(434.0, 125.0, 9, 7, 0xAA, 10, 8, 0, false);
+    int state = lora.begin(434.0, 125.0, 7, 5, 0xAA, 22, 6, 0, false);
     if (state != RADIOLIB_ERR_NONE) {
         Serial.print("LoRa Initialization Failed, code ");
         Serial.println(state);
         return false;
     }
-    
+    pinMode(2, OUTPUT);
     lora.setDio1Action(CommunicationHandler::setFlag); // Ensure interrupt is set up
     lora.startReceive(); // Start listening for incoming packets
     Serial.println("LoRa Initializing OK!");
@@ -38,17 +38,21 @@ void CommunicationHandler::sendData() {
 
         // Create a JSON object for structured data transfer
         StaticJsonDocument<128> json;
-        json["latitude"] = 52.5200;
-        json["longitude"] = 13.4050;
-        json["deviceID"] = deviceID;
+        json["latitude"] = messageHandler->ownMessage.latitude;
+        json["longitude"] = messageHandler->ownMessage.longitude;
+        json["deviceID"] = messageHandler->ownMessage.deviceID;
 
         char buffer[128];
         serializeJson(json, buffer);
 
         // Start transmission (non-blocking)
+        transmissionStart = std::chrono::high_resolution_clock::now();
+
         int transmissionState = lora.startTransmit((uint8_t*)buffer, strlen(buffer) + 1);
 
         lastSendTime = currentTime;
+        delayTime = random(minDelay, maxDelay);
+        Serial.println(delayTime);
     }
 }
 
@@ -61,7 +65,11 @@ void CommunicationHandler::check(){
             // print the result
             if (transmissionState == RADIOLIB_ERR_NONE) {
                 // packet was successfully sent
-                Serial.println(F("transmission finished!"));
+                auto transmissionEnd = std::chrono::high_resolution_clock::now();
+                auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(transmissionEnd - transmissionStart);
+                std::cout << "Transmission took " << duration.count() << " milliseconds." << std::endl;
+
+                // Serial.println(F("transmission finished!"));
 
             } else {
                 Serial.print(F("failed, code "));
@@ -72,9 +80,10 @@ void CommunicationHandler::check(){
             // listen for response
             lora.startReceive();
             transmitFlag = false;
+        }else{
+            checkReceive();
         }
     }
-    checkReceive();
     sendData();
 }
 
@@ -82,16 +91,15 @@ void CommunicationHandler::checkReceive() {
     unsigned long currentTime = millis();
     String str;
 
-    if (transmitFlag || currentTime - lastReceiveTime < 200) {
-        return;
-    }
-
     int state = lora.readData(str);
-
-    
 
     if (state == RADIOLIB_ERR_NONE) {
         lastReceiveTime = currentTime;
+
+        //make gpio2 blink for 500ms
+        digitalWrite(2, HIGH);
+        delay(300);
+        digitalWrite(2, LOW);
 
         Serial.println(F("[SX1262] Received packet!"));
 
@@ -114,6 +122,13 @@ void CommunicationHandler::checkReceive() {
             float lat = json["latitude"];
             float lon = json["longitude"];
             uint32_t id = json["deviceID"];
+
+            struct_message receivedData;
+            receivedData.deviceID = id;
+            receivedData.latitude = lat;
+            receivedData.longitude = lon;
+
+            messageHandler->pushMessage(receivedData);            
 
             Serial.printf("Received: ID=%08X, Lat=%.4f, Lon=%.4f\n", id, lat, lon);
         } else {

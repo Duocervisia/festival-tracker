@@ -20,6 +20,7 @@
                 "C:\\Users\\tobia\\Documents\\Arduino\\libraries\\RadioLib\\src",
                 "C:\\Users\\tobia\\AppData\\Local\\Arduino15\\packages\\esp32\\hardware\\esp32\\3.0.2\\libraries\\SPI\\src",
                 "C:\\Users\\tobia\\Documents\\Arduino\\libraries\\TinyGPSPlus\\src",
+                "C:\\Users\\tobia\\Documents\\Arduino\\libraries\\QMC5883LCompass\\src",
                 "C:\\Users\\tobia\\Documents\\Arduino\\libraries\\ArduinoJson\\src",
                 "c:\\users\\tobia\\appdata\\local\\arduino15\\packages\\esp32\\tools\\esp-x32\\2302\\xtensa-esp32-elf\\include\\c++\\12.2.0",
                 "c:\\users\\tobia\\appdata\\local\\arduino15\\packages\\esp32\\tools\\esp-x32\\2302\\xtensa-esp32-elf\\include\\c++\\12.2.0\\xtensa-esp32-elf",
