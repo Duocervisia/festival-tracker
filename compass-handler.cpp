@@ -44,7 +44,13 @@ void CompassHandler::calibrate() {
     Serial.println(");");
 }
 
-int CompassHandler::getAzimuth() {
+void CompassHandler::updateAzimuth() {
+    unsigned long currentTime = millis();
+    if(currentTime - lastAzimuthUpdate < delayTime){
+        return;
+    }
+    lastAzimuthUpdate = currentTime;
+
     compass.read();
     int x = compass.getX();
     int y = compass.getY();
@@ -53,6 +59,6 @@ int CompassHandler::getAzimuth() {
     heading += magneticDeclinationDegrees;
     int iheading = (int)heading % 360;
     Serial.println("Azimuth: " + String(iheading));
-    return iheading;
+    azimuth = iheading;
 }
 

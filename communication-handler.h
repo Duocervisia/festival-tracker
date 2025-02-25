@@ -4,13 +4,13 @@
 #include <RadioLib.h>
 #include "display.h"
 #include "message-handler.h"
-#include <queue>
 #include <chrono>
 
 #define NSS 5
 #define RESET 13
 #define DIO1 14
 #define BUSY 27
+#define RECEIVE_LED 2
 
 class CommunicationHandler {
 public:
@@ -31,6 +31,8 @@ private:
     unsigned short delayTime = 2000;
     unsigned short minDelay = 1000;
     unsigned short maxDelay = 3000;
+    unsigned long receiveLEDTime = 0;
+    unsigned short receiveLEDDuration = 300;
     std::chrono::time_point<std::chrono::high_resolution_clock> transmissionStart;
     static volatile bool operationDone;
     bool transmitFlag = false;

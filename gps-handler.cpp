@@ -10,9 +10,22 @@ bool GpsHandler::begin() {
     delay(1000);
     neogps.println("$PMTK314,-1*04");
     neogps.println("$PMTK220,1000*1F");
+    pinMode(GPS_RESET, OUTPUT);
+    digitalWrite(GPS_RESET, HIGH);
+
 
     Serial.println("GPS Done!");
     return true;
+}
+
+void GpsHandler::reset(unsigned long currentTime) {
+    if (currentTime - lastReset >= resetTime) {
+        lastReset = currentTime;
+        Serial.println("Resetting GPS");
+        digitalWrite(GPS_RESET, LOW);
+        delay(100);
+        digitalWrite(GPS_RESET, HIGH);
+    }
 }
 
 void GpsHandler::read() {
@@ -22,6 +35,10 @@ void GpsHandler::read() {
         Serial.println("Reading GPS");
         Serial.println(neogps.available());
         boolean newData = false;
+
+        if(neogps.available() == 0){
+            reset(currentTime);
+        }
 
         while (neogps.available()){
             char c = neogps.read();

@@ -14,13 +14,13 @@ CommunicationHandler::CommunicationHandler(Display &disp, MessageHandler &msgHan
 bool CommunicationHandler::begin() {
     Serial.begin(115200);
 
-    int state = lora.begin(434.0, 125.0, 7, 5, 0xAA, 22, 6, 0, false);
+    int state = lora.begin(434.0, 125.0, 9, 5, 0xAA, 22, 14, 0, false);
     if (state != RADIOLIB_ERR_NONE) {
         Serial.print("LoRa Initialization Failed, code ");
         Serial.println(state);
         return false;
     }
-    pinMode(2, OUTPUT);
+    pinMode(RECEIVE_LED, OUTPUT);
     lora.setDio1Action(CommunicationHandler::setFlag); // Ensure interrupt is set up
     lora.startReceive(); // Start listening for incoming packets
     Serial.println("LoRa Initializing OK!");
@@ -84,6 +84,9 @@ void CommunicationHandler::check(){
             checkReceive();
         }
     }
+    if(receiveLEDTime != 0 && millis() > receiveLEDTime+receiveLEDDuration){
+        digitalWrite(RECEIVE_LED, LOW);
+    }
     sendData();
 }
 
@@ -97,9 +100,8 @@ void CommunicationHandler::checkReceive() {
         lastReceiveTime = currentTime;
 
         //make gpio2 blink for 500ms
-        digitalWrite(2, HIGH);
-        delay(300);
-        digitalWrite(2, LOW);
+        digitalWrite(RECEIVE_LED, HIGH);
+        receiveLEDTime = currentTime + 500;
 
         Serial.println(F("[SX1262] Received packet!"));
 

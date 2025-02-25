@@ -9,11 +9,13 @@ public:
     int azimuth;
     bool begin();
     void calibrate();
-    int getAzimuth();
+    void updateAzimuth();
 
 private:
     QMC5883LCompass compass;
     float magneticDeclinationDegrees = 0;
+    unsigned long lastAzimuthUpdate = 0;
+	unsigned int delayTime = 1000;
 };
 
 extern CompassHandler compassHandler;

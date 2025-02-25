@@ -1,3 +1,5 @@
+#include <WiFi.h>  // Include this for ESP32
+
 #include "display.h"
 #include "message-handler.h"
 #include "communication-handler.h"
@@ -13,6 +15,14 @@ CompassHandler compassHandler;
 
 void setup() {
     Serial.begin(115200);
+    WiFi.mode(WIFI_OFF);
+    btStop();
+    // adc_power_off();
+    // setCpuFrequencyMhz(10);
+    uint32_t  Freq = getCpuFrequencyMhz();
+    Serial.print("CPU Freq = ");
+    Serial.print(Freq);
+
 
     if (!display.begin()) {
         Serial.println("Display initialization failed");
@@ -35,8 +45,8 @@ void setup() {
 
 void loop() {
     commHandler.check();
-    // gpsHandler.read();
-    // compassHandler.getAzimuth();
+    gpsHandler.read();
+    compassHandler.updateAzimuth();
 
     // delay(1000);
 }
