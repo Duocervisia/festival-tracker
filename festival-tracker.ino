@@ -23,6 +23,8 @@ void setup() {
     Serial.print("CPU Freq = ");
     Serial.print(Freq);
 
+    // pinMode(DIO1, INPUT_PULLUP);  
+    // esp_sleep_enable_ext0_wakeup((gpio_num_t)DIO1, 0); // Wake up on LoRa interrupt
 
     if (!display.begin()) {
         Serial.println("Display initialization failed");
@@ -48,5 +50,8 @@ void loop() {
     gpsHandler.read();
     compassHandler.updateAzimuth();
 
+    // Serial.println("Going to light sleep...");
+    // esp_light_sleep_start();  // Sleep until LoRa receives something
+    // Serial.println("Woke up! Checking LoRa...");
     // delay(1000);
 }
