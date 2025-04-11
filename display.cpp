@@ -5,7 +5,10 @@
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 64 // OLED display height, in pixels
 
-Display::Display() : u8g2(U8G2_R0, SCL, SDA, U8X8_PIN_NONE) {}
+Display::Display(GpsHandler &gpsHdlr, MessageHandler &msgHdlr) : u8g2(U8G2_R0, SCL, SDA, U8X8_PIN_NONE) {
+    gpsHandler = &gpsHdlr;
+    messageHandler = &msgHdlr;
+}
 
 bool Display::begin() {
     u8g2.begin();
@@ -33,4 +36,7 @@ void Display::showText(const char* text) {
     }
 
     u8g2.sendBuffer(); // Show the display buffer on the screen
+}
+void updateDisplay() {
+    
 }

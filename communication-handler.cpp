@@ -31,16 +31,16 @@ bool CommunicationHandler::begin() {
 void CommunicationHandler::sendData() {
     static unsigned long lastSendTime = 0;
     unsigned long currentTime = millis();
-
     if (!transmitFlag && currentTime - lastSendTime >= delayTime) {
         Serial.println("Sending data...");
         transmitFlag = true;
 
         // Create a JSON object for structured data transfer
         StaticJsonDocument<128> json;
-        json["latitude"] = messageHandler->ownMessage.latitude;
-        json["longitude"] = messageHandler->ownMessage.longitude;
-        json["deviceID"] = messageHandler->ownMessage.deviceID;
+        json["x"] = messageHandler->ownMessage.latitude;
+        json["y"] = messageHandler->ownMessage.longitude;
+        json["i"] = messageHandler->ownMessage.deviceID;
+        json["t"] = messageHandler->ownMessage.unixTime;
 
         char buffer[128];
         serializeJson(json, buffer);
@@ -121,18 +121,20 @@ void CommunicationHandler::checkReceive() {
         StaticJsonDocument<128> json;
         DeserializationError error = deserializeJson(json, str);
         if (!error) {
-            float lat = json["latitude"];
-            float lon = json["longitude"];
-            uint32_t id = json["deviceID"];
+            float lat = json["x"];
+            float lon = json["y"];
+            uint32_t id = json["i"];
+            time_t unixTime = json["t"];
 
             struct_message receivedData;
             receivedData.deviceID = id;
             receivedData.latitude = lat;
             receivedData.longitude = lon;
+            receivedData.unixTime = unixTime;
 
             messageHandler->pushMessage(receivedData);            
 
-            Serial.printf("Received: ID=%08X, Lat=%.4f, Lon=%.4f\n", id, lat, lon);
+            Serial.printf("Received: ID=%08X, Lat=%.4f, Lon=%.4f, Time=%ld\n", id, lat, lon, unixTime);
         } else {
             Serial.println("Failed to parse JSON!");
         }

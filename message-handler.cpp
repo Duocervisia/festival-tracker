@@ -6,6 +6,7 @@ MessageHandler::MessageHandler() : count(0) {
     ownMessage.deviceID = ESP.getEfuseMac() & 0xFFFFFFFF; // Extract lower 32 bits of MAC
     ownMessage.latitude = 0.0;
     ownMessage.longitude = 0.0;
+    ownMessage.unixTime = 0;
 }
 
 void MessageHandler::pushMessage(const struct_message& msg) {
@@ -20,6 +21,11 @@ void MessageHandler::pushMessage(const struct_message& msg) {
     } else {
         std::cerr << "Array is full, cannot add new message." << std::endl;
     }
+}
+void MessageHandler::updateOwnMessage(double latitude, double longitude, time_t unixTime) {
+    ownMessage.latitude = latitude;
+    ownMessage.longitude = longitude;
+    ownMessage.unixTime = unixTime;
 }
 
 void MessageHandler::printMessages() const {

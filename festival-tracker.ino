@@ -8,9 +8,9 @@
 
 // Create instances
 MessageHandler messageHandler;
-Display display;
+GpsHandler gpsHandler(messageHandler);
+Display display(gpsHandler, messageHandler);
 CommunicationHandler commHandler(display, messageHandler);
-GpsHandler gpsHandler;
 CompassHandler compassHandler;
 
 void setup() {
