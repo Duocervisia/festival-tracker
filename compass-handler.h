@@ -16,6 +16,7 @@ private:
     float magneticDeclinationDegrees = 0;
     unsigned long lastAzimuthUpdate = 0;
 	unsigned int delayTime = 1000;
+    short compassCorrection = 90;
 };
 
 extern CompassHandler compassHandler;

@@ -36,14 +36,12 @@ void CommunicationHandler::sendData() {
         transmitFlag = true;
 
         // Create a JSON object for structured data transfer
-        StaticJsonDocument<128> json;
-        json["x"] = messageHandler->ownMessage.latitude;
-        json["y"] = messageHandler->ownMessage.longitude;
-        json["i"] = messageHandler->ownMessage.deviceID;
-        json["t"] = messageHandler->ownMessage.unixTime;
-
         char buffer[128];
-        serializeJson(json, buffer);
+        snprintf(buffer, sizeof(buffer), "%.5f,%.5f,%d,%d", 
+                messageHandler->ownMessage.latitude, 
+                messageHandler->ownMessage.longitude, 
+                messageHandler->ownMessage.deviceID, 
+                messageHandler->ownMessage.unixTime);
 
         // Start transmission (non-blocking)
         transmissionStart = std::chrono::high_resolution_clock::now();
@@ -118,25 +116,23 @@ void CommunicationHandler::checkReceive() {
         Serial.println(str);
 
         // Deserialize JSON for structured data
-        StaticJsonDocument<128> json;
-        DeserializationError error = deserializeJson(json, str);
-        if (!error) {
-            float lat = json["x"];
-            float lon = json["y"];
-            uint32_t id = json["i"];
-            time_t unixTime = json["t"];
+        // Parse comma-separated string for structured data
+        float lat, lon;
+        uint32_t id;
+        time_t unixTime;
 
+        if (sscanf(str.c_str(), "%f,%f,%u,%ld", &lat, &lon, &id, &unixTime) == 4) {
             struct_message receivedData;
             receivedData.deviceID = id;
             receivedData.latitude = lat;
             receivedData.longitude = lon;
             receivedData.unixTime = unixTime;
 
-            messageHandler->pushMessage(receivedData);            
+            messageHandler->pushMessage(receivedData);
 
             Serial.printf("Received: ID=%08X, Lat=%.4f, Lon=%.4f, Time=%ld\n", id, lat, lon, unixTime);
         } else {
-            Serial.println("Failed to parse JSON!");
+            Serial.println("Failed to parse data!");
         }
 
         totalPackets++;

@@ -7,6 +7,18 @@ MessageHandler::MessageHandler() : count(0) {
     ownMessage.latitude = 0.0;
     ownMessage.longitude = 0.0;
     ownMessage.unixTime = 0;
+
+    //Main Device
+    if(ownMessage.deviceID == 0x2FA7DBCC) {
+        ownMessage.latitude = 52.455323;
+        ownMessage.longitude = 13.525019;
+    }
+
+    //Secondary device
+    if(ownMessage.deviceID == 0x77B865E4) {
+        ownMessage.latitude = 52.454859;
+        ownMessage.longitude = 13.520910;
+    }
 }
 
 void MessageHandler::pushMessage(const struct_message& msg) {

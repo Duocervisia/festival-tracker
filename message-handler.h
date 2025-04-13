@@ -17,9 +17,10 @@ public:
     void printMessages() const;
     void updateOwnMessage(double latitude, double longitude, time_t unixTime);
     struct_message ownMessage;
-private:
     struct_message messages[10];
     int count;
+
+private:
 };
 
 #endif // MESSAGE_HANDLER_H

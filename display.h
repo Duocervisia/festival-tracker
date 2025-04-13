@@ -16,6 +16,8 @@ public:
 
     void showText(const char* text);
 
+    void updateDirection(int azimuth);
+
 private:
     GpsHandler* gpsHandler;
     MessageHandler* messageHandler;

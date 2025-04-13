@@ -57,6 +57,9 @@ void CompassHandler::updateAzimuth() {
 
     float heading = atan2(x, y) * 180.0 / M_PI;
     heading += magneticDeclinationDegrees;
+
+    heading += 360;
+    heading += compassCorrection;
     int iheading = (int)heading % 360;
     Serial.println("Azimuth: " + String(iheading));
     azimuth = iheading;
