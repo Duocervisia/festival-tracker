@@ -49,7 +49,8 @@ void loop() {
     commHandler.check();
     gpsHandler.read();
     compassHandler.updateAzimuth();
-    display.updateDirection(compassHandler.azimuth);
+    // compassHandler.calibrate();
+    // display.updateDirection(compassHandler.azimuth);
 
     // Serial.println("Going to light sleep...");
     // esp_light_sleep_start();  // Sleep until LoRa receives something

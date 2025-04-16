@@ -46,25 +46,16 @@ void Display::updateDirection(int azimuth) {
     // Serial.println(messageHandler->count);
 
     for (int i = 0; i < messageHandler->count; i++) {
-        double targetLatitude = messageHandler->messages[i].latitude;
-        double targetLongitude = messageHandler->messages[i].longitude;
-
-        // Calculate the direction to the target
-        double deltaLongitude = targetLongitude - ownLongitude;
-        double x = cos(targetLatitude) * sin(deltaLongitude);
-        double y = cos(ownLatitude) * sin(targetLatitude) - sin(ownLatitude) * cos(targetLatitude) * cos(deltaLongitude);
-        double direction = atan2(x, y) * 180.0 / M_PI;
-
-        // Adjust the direction based on the azimuth
-        direction -= azimuth; // Subtract azimuth to align with the target
-        if (direction < 0) {
-            direction += 360; // Normalize to 0-360 degrees
-        } else if (direction >= 360) {
-            direction -= 360; // Normalize to 0-360 degrees
-        }
-
+      
+        int angleToPoint =
+          azimuth + gpsHandler->calculateAngle(messageHandler->messages[i].latitude, messageHandler->messages[i].longitude,
+                                     ownLatitude,
+                                     ownLongitude);
+        angleToPoint = angleToPoint % 360;
         // Print the direction
-        // Serial.print("Direction: ");
-        // Serial.println(direction);
+        Serial.print("Direction and Azimuth: ");
+        Serial.print(angleToPoint);
+        Serial.print(" ");
+        Serial.println(azimuth);
     }
 }

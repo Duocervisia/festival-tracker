@@ -6,8 +6,8 @@ bool CompassHandler::begin() {
     int minutes = 58;
     magneticDeclinationDegrees = degrees + minutes / 60;
     compass.init();
-    compass.setCalibrationOffsets(-446.00, 540.00, -151.00);
-    compass.setCalibrationScales(1.04, 0.92, 1.06);
+    compass.setCalibrationOffsets(-254.00, 788.00, -321.00);
+    compass.setCalibrationScales(0.89, 1.10, 1.03);
     Serial.println("Compass initialized");
     return true;
 }
@@ -58,10 +58,16 @@ void CompassHandler::updateAzimuth() {
     float heading = atan2(x, y) * 180.0 / M_PI;
     heading += magneticDeclinationDegrees;
 
-    heading += 360;
-    heading += compassCorrection;
+    // heading += 360;
+    // heading += compassCorrection;
     int iheading = (int)heading % 360;
-    Serial.println("Azimuth: " + String(iheading));
-    azimuth = iheading;
+
+    if (iheading < 0) {
+        iheading = 360 + iheading;
+    }
+    iheading += 70;
+    azimuth = iheading % 360;
+    Serial.println("Azimuth: " + String(azimuth));
+
 }
 

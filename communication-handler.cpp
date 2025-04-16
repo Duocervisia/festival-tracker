@@ -37,11 +37,16 @@ void CommunicationHandler::sendData() {
 
         // Create a JSON object for structured data transfer
         char buffer[128];
-        snprintf(buffer, sizeof(buffer), "%.5f,%.5f,%d,%d", 
-                messageHandler->ownMessage.latitude, 
-                messageHandler->ownMessage.longitude, 
-                messageHandler->ownMessage.deviceID, 
-                messageHandler->ownMessage.unixTime);
+        snprintf(buffer, sizeof(buffer), "%.5f,%.5f,%u,%ld", 
+            messageHandler->ownMessage.latitude, 
+            messageHandler->ownMessage.longitude, 
+            messageHandler->ownMessage.deviceID, 
+            (long)messageHandler->ownMessage.unixTime); // Cast to long if needed
+
+        Serial.print(F("unixTime: "));
+        Serial.println(messageHandler->ownMessage.unixTime);
+        Serial.print(F("Sending: "));
+        Serial.println(buffer);
 
         // Start transmission (non-blocking)
         transmissionStart = std::chrono::high_resolution_clock::now();

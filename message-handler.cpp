@@ -9,15 +9,15 @@ MessageHandler::MessageHandler() : count(0) {
     ownMessage.unixTime = 0;
 
     //Main Device
-    if(ownMessage.deviceID == 0x2FA7DBCC) {
-        ownMessage.latitude = 52.455323;
-        ownMessage.longitude = 13.525019;
+    if(ownMessage.deviceID == 0x30A7DBCC) {
+        ownMessage.latitude = 52.459576;
+        ownMessage.longitude = 13.336136;
     }
 
     //Secondary device
     if(ownMessage.deviceID == 0x77B865E4) {
-        ownMessage.latitude = 52.454859;
-        ownMessage.longitude = 13.520910;
+        ownMessage.latitude = 52.459256;
+        ownMessage.longitude = 13.336190;
     }
 }
 
